@@ -1,24 +1,35 @@
 name: sampahku_final
 description: "A new Flutter project."
+
+# Mencegah agar tidak ter-publish secara tidak sengaja ke pub.dev.
 publish_to: 'none'
-version: 0.1.0
+
+# Versi aplikasi, diikuti dengan build number.
+version: 1.0.0+1
 
 environment:
-  sdk: ^3.7.2
+  # Menggunakan rentang versi SDK adalah praktik terbaik.
+  sdk: '>=3.4.0 <4.0.0'
 
 dependencies:
   flutter:
     sdk: flutter
 
+  # Paket lain ditempatkan di sini, sejajar dengan 'flutter'.
+  cupertino_icons: ^1.0.6
+  google_fonts: ^6.2.1
+  fl_chart: ^1.0.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^5.0.0
+
+  flutter_lints: ^4.0.0
 
 flutter:
-  assets:
-  - lib/assets/images/
-  - lib/assets/icons/
-  - lib/assets/fonts/
   uses-material-design: true
 
+  assets:
+    - lib/assets/images/
+    - lib/assets/icons/
+    - lib/assets/fonts/

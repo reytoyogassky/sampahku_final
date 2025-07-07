@@ -1,47 +1,54 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:sampahku_final/pages/edukasi_page.dart';
+import 'package:sampahku_final/pages/profile_page.dart';
+import 'package:sampahku_final/pages/tantangan_page.dart';
+import 'package:sampahku_final/pages/trash_page.dart';
 
-class SampahKuHomePage extends StatefulWidget {
-  const SampahKuHomePage({super.key});
-
-  @override
-  State<SampahKuHomePage> createState() => _SampahKuHomePageState();
+void main() {
+  runApp(const MaterialApp(home: SampahKUHomePage(), debugShowCheckedModeBanner: false));
 }
 
-class _SampahKuHomePageState extends State<SampahKuHomePage> {
+// ==== WARNA ====
+const Color kScaffoldBackground = Color(0xFFF4F7F6);
+const Color kDarkGreen = Color(0xFF00695C);
+const Color kMediumGreen = Color(0xFF26A69A);
+const Color kDarkBarColor = Color(0xFF388E3C);
+const Color kLightBarColor = Color(0xFFA5D6A7);
+const Color kOrangeCard = Color(0xFFFFE0B2);
+const Color kBlueCard = Color(0xFFBBDEFB);
+const Color kGreenCard = Color(0xFFC8E6C9);
+const Color kBrownCard = Color(0xFFD7CCC8);
+
+// ==== HALAMAN UTAMA ====
+class SampahKUHomePage extends StatelessWidget {
+  const SampahKUHomePage({super.key});
+
   @override
   Widget build(BuildContext context) {
-    // Membuat status bar di atas menjadi terang (cocok untuk background gelap)
     SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle.light);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F5),
+      backgroundColor: kScaffoldBackground,
       body: SingleChildScrollView(
         child: Column(
           children: [
-            _buildHeader(),
-            _buildBody(),
+            _buildHeader(context),
+            _buildBody(context),
           ],
         ),
       ),
-      bottomNavigationBar: _buildBottomNavBar(),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {},
-        backgroundColor: Colors.white,
-        elevation: 4.0,
-        child: const Icon(Icons.add_home_outlined, color: Color(0xFF0D4D44)),
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+      bottomNavigationBar: _buildBottomNavBar(context),
     );
   }
 
-  // WIDGET UNTUK BAGIAN HEADER (AREA HIJAU)
-  Widget _buildHeader() {
+  Widget _buildHeader(BuildContext context) {
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 50, 20, 30),
       decoration: const BoxDecoration(
         gradient: LinearGradient(
-          colors: [Color(0xFF63BFA9), Color(0xFF0D4D44)],
+          colors: [kMediumGreen, kDarkGreen],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -49,7 +56,6 @@ class _SampahKuHomePageState extends State<SampahKuHomePage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Baris untuk Avatar, Nama, dan Notifikasi
           Row(
             children: [
               const CircleAvatar(
@@ -58,332 +64,288 @@ class _SampahKuHomePageState extends State<SampahKuHomePage> {
                 child: Icon(Icons.person, size: 30, color: Colors.grey),
               ),
               const SizedBox(width: 15),
-              const Column(
+              Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    'SampahKU',
-                    style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold),
-                  ),
-                  Text(
-                    'Haloo, Yohanes Irshan 👋',
-                    style: TextStyle(color: Colors.white70, fontSize: 14),
-                  ),
-                  Text(
-                    'King Plastik 🥇',
-                    style: TextStyle(color: Colors.white, fontSize: 12),
-                  ),
+                  Text('SampahKU', style: GoogleFonts.poppins(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                  Text('Haloo, Yohanes Irshan 👋', style: GoogleFonts.poppins(color: Colors.white70, fontSize: 14)),
+                  Text('King Plastik 🥇', style: GoogleFonts.poppins(color: Colors.white, fontSize: 12)),
                 ],
               ),
               const Spacer(),
-              const Icon(Icons.notifications_none,
-                  color: Colors.white, size: 30),
+              const Icon(Icons.notifications_none, color: Colors.white, size: 30),
             ],
           ),
           const SizedBox(height: 30),
-          // Bagian Challenge
-          const Text(
-            'Challenge 🔥',
-            style: TextStyle(
-                color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
-          ),
+          Text('Challenge 🔥', style: GoogleFonts.poppins(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
           const SizedBox(height: 5),
-          const Text(
-            '7 Hari Tanpa Plastik',
-            style: TextStyle(color: Colors.white70, fontSize: 14),
-          ),
+          Text('7 Hari Tanpa Plastik', style: GoogleFonts.poppins(color: Colors.white70, fontSize: 14)),
           const SizedBox(height: 15),
-          // Progress Bar
-          Stack(
-            children: [
-              Container(
-                height: 35,
-                decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-              ),
-              FractionallySizedBox(
-                widthFactor: 0.75,
-                child: Container(
-                  height: 35,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                ),
-              ),
-              const Positioned.fill(
-                child: Center(
-                  child: Text(
-                    '75%',
-                    style: TextStyle(
-                        color: Color(0xFF0D4D44), fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ),
-            ],
-          )
+          _buildProgressBar(),
         ],
       ),
     );
   }
 
-  // WIDGET UNTUK BAGIAN BODY (AREA PUTIH)
-  Widget _buildBody() {
+  Widget _buildProgressBar() {
+    const double progress = 0.75;
+    return Container(
+      height: 40,
+      decoration: BoxDecoration(
+        color: Colors.black.withOpacity(0.25),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.white.withOpacity(0.2)),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(20),
+        child: Stack(
+          children: [
+            LayoutBuilder(
+              builder: (context, constraints) {
+                return Container(
+                  width: constraints.maxWidth * progress,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                );
+              },
+            ),
+            Align(
+              alignment: Alignment(progress * 2 - 1, 0),
+              child: Padding(
+                padding: const EdgeInsets.only(right: 18.0),
+                child: Text('${(progress * 100).toInt()}%',
+                  style: GoogleFonts.poppins(
+                    color: kDarkGreen,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBody(BuildContext context) {
     return Container(
       transform: Matrix4.translationValues(0.0, -20.0, 0.0),
+      padding: const EdgeInsets.only(top: 20),
       decoration: const BoxDecoration(
-        color: Color(0xFFF5F5F5),
+        color: kScaffoldBackground,
         borderRadius: BorderRadius.only(
           topLeft: Radius.circular(25),
           topRight: Radius.circular(25),
         ),
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildStatistik(),
-            const SizedBox(height: 30),
-            _buildJenisSampah(),
-          ],
-        ),
+      child: Column(
+        children: [
+          _buildStatistik(context),
+          const SizedBox(height: 30),
+          _buildJenisSampah(context),
+          const SizedBox(height: 20),
+        ],
       ),
     );
   }
 
-  // WIDGET UNTUK KARTU STATISTIK
-  Widget _buildStatistik() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            const Text(
-              'Statistik',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-            ),
-            Chip(
-              label: const Text('Filter', style: TextStyle(color: Colors.green)),
-              backgroundColor: Colors.green.withOpacity(0.2),
-              avatar: const Icon(Icons.filter_list, color: Colors.green),
-            ),
-          ],
-        ),
-        const SizedBox(height: 15),
-        Row(
-          children: [
-            _buildLegend(Colors.green, 'Organik'),
-            const SizedBox(width: 20),
-            _buildLegend(Colors.lightGreen, 'Anorganik'),
-            const Spacer(),
-            const Text('2025', style: TextStyle(color: Colors.grey)),
-          ],
-        ),
-        const SizedBox(height: 20),
-        // Bar Chart Sederhana
-        SizedBox(
-          height: 150,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            crossAxisAlignment: CrossAxisAlignment.end,
+  Widget _buildStatistik(BuildContext context) {
+    final Map<String, List<double>> chartData = {
+      'Jan': [0.6],
+      'Feb': [0.7, 0.9],
+      'Mar': [0.5, 0.65],
+      'Apr': [0.55, 0.9],
+      'Mei': [0.7, 0.8, 0.95],
+    };
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20.0),
+      child: Column(
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              _buildBar('Jan', 0.6, Colors.green),
-              _buildBar('Feb', 0.7, Colors.lightGreen),
-              _buildBar('Feb', 0.9, Colors.green),
-              _buildBar('Mar', 0.5, Colors.lightGreen),
-              _buildBar('Mar', 0.65, Colors.green),
-              _buildBar('Apr', 0.55, Colors.lightGreen),
-              _buildBar('Apr', 0.9, Colors.green),
-              _buildBar('Mei', 0.7, Colors.lightGreen),
-              _buildBar('Mei', 0.8, Colors.green),
-              _buildBar('Mei', 0.95, Colors.lightGreen),
+              Text('Statistik', style: GoogleFonts.poppins(fontSize: 20, fontWeight: FontWeight.bold)),
+              Chip(
+                label: Text('Filter', style: GoogleFonts.poppins(color: const Color(0xff0F9D58), fontWeight: FontWeight.w600)),
+                backgroundColor: const Color(0xffE8F3F1),
+                avatar: const Icon(Icons.filter_list, color: Color(0xff0F9D58)),
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+              ),
             ],
           ),
-        ),
-      ],
-    );
-  }
-
-  // WIDGET UNTUK KARTU JENIS-JENIS SAMPAH
-  Widget _buildJenisSampah() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            const Text(
-              'Jenis-Jenis Sampah',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-            ),
-            Column(
+          const SizedBox(height: 15),
+          Row(
+            children: [
+              _buildLegend(kDarkBarColor, 'Organik'),
+              const SizedBox(width: 20),
+              _buildLegend(kLightBarColor, 'Anorganik'),
+              const Spacer(),
+              Text('2025', style: GoogleFonts.poppins(color: Colors.grey, fontSize: 12)),
+            ],
+          ),
+          const SizedBox(height: 20),
+          SizedBox(
+            height: 150,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Text(
-                  'By: Yohanes Irshan',
-                  style: TextStyle(color: Colors.grey[600], fontSize: 12),
-                ),
-                Text(
-                  '10 Juni 2025',
-                  style: TextStyle(color: Colors.grey[600], fontSize: 12),
-                ),
-              ],
-            )
-          ],
-        ),
-        const SizedBox(height: 15),
-        SizedBox(
-          height: 200,
-          child: ListView(
-            scrollDirection: Axis.horizontal,
-            children: [
-              _buildWasteCard(
-                color: Colors.orange.shade100,
-                title: 'SAMPAH PLASTIK',
-                content1: 'Kantong Plastik, Botol Plastik, Gelas Plastik, Sterofoam, dsb',
-                content2: 'Sampah plastik dapat didaur ulang menjadi kerajinan tangan ataupun menjadi bahan barang yang dapat digunakan kembali.',
-              ),
-              _buildWasteCard(
-                color: Colors.blue.shade100,
-                title: 'SAMPAH KACA',
-                content1: 'Botol Kaca, Piring Kaca, Botol Parfum, Gelas Kaca, Pecahan Kaca, dsb',
-                content2: 'Sampah kaca dapat didaur ulang untuk pembuatan batu tiruan ataupun vas/pot cantik.',
-              ),
-              _buildWasteCard(
-                color: Colors.green.shade100,
-                title: 'SAMPAH ORGANIK',
-                content1: 'Sisa Makanan, Daun - daunan, Cangkang Buah, dsb',
-                content2: 'Sampah organik dapat dimanfaatkan sebagai pupuk, pakan ternak, biogas dan listrik.',
-              ),
-              _buildWasteCard(
-                color: Colors.brown.shade100,
-                title: 'SAMPAH KERTAS',
-                content1: 'Buku, Karton, Kardus, Koran, Kertas, dsb',
-                content2: 'Sampah kertas dapat didaur ulang menjadi kerajinan tangan dan bahan pembuatan kertas beku.',
-              ),
-            ],
+              children: chartData.entries.map((entry) {
+                return _buildMonthBarGroup(entry.key, entry.value);
+              }).toList(),
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
-  // WIDGET UNTUK BOTTOM NAVIGATION BAR
-  Widget _buildBottomNavBar() {
+  Widget _buildJenisSampah(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20.0),
+      child: Column(
+        children: [
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Jenis-Jenis Sampah', style: GoogleFonts.poppins(fontSize: 20, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 4),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text('By: Yohanes Irshan', style: GoogleFonts.poppins(color: Colors.grey[600], fontSize: 12)),
+                  Text('10 Juni 2025', style: GoogleFonts.poppins(color: Colors.grey[600], fontSize: 12)),
+                ],
+              )
+            ],
+          ),
+          const SizedBox(height: 15),
+          SizedBox(
+            height: 200,
+            child: ListView(
+              scrollDirection: Axis.horizontal,
+              physics: const BouncingScrollPhysics(),
+              children: const [
+                _WasteCard(color: kOrangeCard, title: 'SAMPAH PLASTIK', content1: 'Kantong Plastik, Botol Plastik, Gelas Plastik, Sterofoam, dsb'),
+                _WasteCard(color: kBlueCard, title: 'SAMPAH KACA', content1: 'Botol Kaca, Piring Kaca, Botol Parfum, Gelas Kaca, Pecahan Kaca, dsb'),
+                _WasteCard(color: kGreenCard, title: 'SAMPAH ORGANIK', content1: 'Sisa Makanan, Daun - daunan, Cangkang Buah, dsb'),
+                _WasteCard(color: kBrownCard, title: 'SAMPAH KERTAS', content1: 'Buku, Karton, Kardus, Koran, Kertas, dsb'),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBottomNavBar(BuildContext context) {
     return BottomAppBar(
-      shape: const CircularNotchedRectangle(),
-      notchMargin: 8.0,
-      color: const Color(0xFF0D4D44),
+      color: kDarkGreen,
       child: SizedBox(
-        height: 60,
+        height: 65,
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
-            _buildNavItem(Icons.bar_chart, 'Report', true),
-            _buildNavItem(null, 'Tambah Sampah', false), // Placeholder
-            _buildNavItem(Icons.book_outlined, 'Edukasi', false),
-            _buildNavItem(Icons.person_outline, 'Profile', false),
+            _buildNavItem(context, Icons.bar_chart, 'Tantangan', () => Navigator.push(context, MaterialPageRoute(builder: (context) => TantanganPage()))),
+            _buildNavItem(context, Icons.delete_forever_outlined, 'Tambah Sampah', () => Navigator.push(context, MaterialPageRoute(builder: (context) => TrashPage()))),
+            _buildNavItem(context, Icons.book_outlined, 'Edukasi', () => Navigator.push(context, MaterialPageRoute(builder: (context) => EdukasiPage()))),
+            _buildNavItem(context, Icons.person_outline, 'Profile', () => Navigator.push(context, MaterialPageRoute(builder: (context) => ProfilePage()))),
           ],
         ),
       ),
     );
   }
 
-  // === WIDGET-WIDGET PEMBANTU ===
-
-  // Item untuk Navigasi Bawah
-  Widget _buildNavItem(IconData? icon, String label, bool isActive) {
-    if (icon == null) {
-      // Ini adalah placeholder untuk area tombol tengah
-      return const SizedBox(width: 40);
-    }
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Icon(icon, color: isActive ? Colors.white : Colors.white54),
-        const SizedBox(height: 4),
-        Text(
-          label,
-          style: TextStyle(
-              color: isActive ? Colors.white : Colors.white54, fontSize: 12),
-        ),
-      ],
+  Widget _buildNavItem(BuildContext context, IconData icon, String label, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(icon, color: Colors.white, size: 26),
+          const SizedBox(height: 4),
+          Text(label, style: GoogleFonts.poppins(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w500)),
+        ],
+      ),
     );
   }
 
-  // Bar untuk Chart Statistik
-  Widget _buildBar(String label, double heightFactor, Color color) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.end,
-      children: [
-        Container(
-          height: 120 * heightFactor,
-          width: 12,
-          decoration: BoxDecoration(
-            color: color,
-            borderRadius: BorderRadius.circular(6),
-          ),
-        ),
-        const SizedBox(height: 8),
-        Text(label, style: const TextStyle(color: Colors.grey, fontSize: 12)),
-      ],
-    );
-  }
-
-  // Legend untuk Chart Statistik
   Widget _buildLegend(Color color, String text) {
     return Row(
       children: [
-        Container(
-          width: 10,
-          height: 10,
-          decoration: BoxDecoration(
-            color: color,
-            shape: BoxShape.circle,
-          ),
-        ),
+        Container(width: 10, height: 10, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
         const SizedBox(width: 8),
-        Text(text, style: const TextStyle(color: Colors.grey)),
+        Text(text, style: GoogleFonts.poppins(color: Colors.grey.shade700)),
       ],
     );
   }
 
-  // Kartu untuk Jenis Sampah
-  Widget _buildWasteCard(
-      {required Color color,
-      required String title,
-      required String content1,
-      required String content2}) {
+  Widget _buildMonthBarGroup(String month, List<double> heights) {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.end,
+      children: [
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: List.generate(heights.length, (index) {
+            return Container(
+              height: 120 * heights[index],
+              width: 10,
+              margin: const EdgeInsets.symmetric(horizontal: 2.0),
+              decoration: BoxDecoration(
+                color: index.isEven ? kDarkBarColor : kLightBarColor,
+                borderRadius: BorderRadius.circular(5),
+              ),
+            );
+          }),
+        ),
+        const SizedBox(height: 8),
+        Text(month, style: GoogleFonts.poppins(color: Colors.grey, fontSize: 12)),
+      ],
+    );
+  }
+}
+
+class _WasteCard extends StatelessWidget {
+  final Color color;
+  final String title;
+  final String content1;
+  const _WasteCard({required this.color, required this.title, required this.content1});
+
+  @override
+  Widget build(BuildContext context) {
     return Container(
       width: 160,
       margin: const EdgeInsets.only(right: 15),
       padding: const EdgeInsets.all(15),
-      decoration: BoxDecoration(
-        color: color,
-        borderRadius: BorderRadius.circular(20),
-      ),
+      decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(20)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title,
-              style:
-                  const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+          Text(title, style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.black87)),
           const SizedBox(height: 5),
-          Text(content1, style: const TextStyle(fontSize: 12)),
+          Text(content1, style: GoogleFonts.poppins(fontSize: 12, color: Colors.black.withOpacity(0.7))),
           const Spacer(),
-          const Icon(Icons.recycling, size: 24),
+          const Icon(Icons.recycling, size: 24, color: Colors.black54),
           const SizedBox(height: 5),
-          Text(content2, style: const TextStyle(fontSize: 12)),
+          Text('Sampah dapat di daur ulang', style: GoogleFonts.poppins(fontSize: 12, color: Colors.black.withOpacity(0.7))),
         ],
       ),
+    );
+  }
+}
+
+class DummyPage extends StatelessWidget {
+  final String title;
+  const DummyPage(this.title, {super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text(title)),
+      body: Center(child: Text('Ini halaman $title')),
     );
   }
 }

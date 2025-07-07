@@ -16,9 +16,9 @@ class _LoginPageState extends State<LoginPage> {
   final _passwordController = TextEditingController();
 
   void loginButton() {
-    Navigator.pushReplacement(
-      context,    
-      MaterialPageRoute(builder: (context) => const SampahKuHomePage()),
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const SampahKUHomePage()),
     );
   }
 
@@ -44,7 +44,7 @@ class _LoginPageState extends State<LoginPage> {
 
   void navigateToRegisterPage() {
     // Di sini Anda akan menempatkan logika untuk pindah halaman
-    Misalnya: Navigator.push(context, MaterialPageRoute(builder: (context) => RegisterPage()));
+    Navigator.push(context, MaterialPageRoute(builder: (context) => RegisterPage()));
     // print("Navigasi ke halaman Daftar...");
     // ScaffoldMessenger.of(context).showSnackBar(
     //   const SnackBar(content: Text("Fitur pendaftaran belum dihubungkan.")),
