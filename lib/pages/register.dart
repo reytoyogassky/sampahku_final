@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:sampahku_final/components/button.dart';
 import 'package:sampahku_final/components/custom_form_field.dart';
 import 'package:sampahku_final/pages/login.dart';
+import 'package:sampahku_final/pages/home_page.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -12,7 +15,7 @@ class RegisterPage extends StatefulWidget {
 }
 
 class _RegisterPageState extends State<RegisterPage> {
-  final usernameController = TextEditingController(); // masih bisa dipakai simpan di Firestore nanti
+  final usernameController = TextEditingController();
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
   bool _isLoading = false;
@@ -20,23 +23,33 @@ class _RegisterPageState extends State<RegisterPage> {
   void registerAction() async {
     final email = emailController.text.trim();
     final password = passwordController.text.trim();
+    final namaLengkap = usernameController.text.trim();
 
-    if (email.isEmpty || password.isEmpty) {
-      _showMessage("Email dan password tidak boleh kosong");
+    if (email.isEmpty || password.isEmpty || namaLengkap.isEmpty) {
+      _showMessage("Semua kolom wajib diisi");
       return;
     }
 
     setState(() => _isLoading = true);
 
     try {
-      await FirebaseAuth.instance.createUserWithEmailAndPassword(
+      UserCredential userCredential =
+          await FirebaseAuth.instance.createUserWithEmailAndPassword(
         email: email,
         password: password,
       );
 
-      _showMessage("Akun berhasil dibuat! Silakan login.");
+      await FirebaseFirestore.instance
+          .collection('pengguna')
+          .doc(userCredential.user!.uid)
+          .set({
+        'nama_lengkap': namaLengkap,
+        'email': email,
+        'password': '***',
+        'tanggal_dibuat': FieldValue.serverTimestamp(),
+      });
 
-      // Kembali ke halaman login
+      _showMessage("Akun berhasil dibuat! Silakan login.");
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => const LoginPage()),
@@ -56,18 +69,54 @@ class _RegisterPageState extends State<RegisterPage> {
     }
   }
 
-  void _showMessage(String msg) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+  void registerWithGoogle() async {
+    try {
+      final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
+      if (googleUser == null) {
+        _showMessage("Login dibatalkan.");
+        return;
+      }
+
+      final GoogleSignInAuthentication googleAuth =
+          await googleUser.authentication;
+
+      final credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
+
+      final userCredential =
+          await FirebaseAuth.instance.signInWithCredential(credential);
+      final user = userCredential.user;
+
+      final userDoc = await FirebaseFirestore.instance
+          .collection('pengguna')
+          .doc(user!.uid)
+          .get();
+
+      if (!userDoc.exists) {
+        await FirebaseFirestore.instance
+            .collection('pengguna')
+            .doc(user.uid)
+            .set({
+          'nama_lengkap': user.displayName ?? '',
+          'email': user.email ?? '',
+          'password': '-',
+          'tanggal_dibuat': FieldValue.serverTimestamp(),
+        });
+      }
+
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const SampahKUHomePage()),
+      );
+    } catch (e) {
+      _showMessage("Login Google gagal: ${e.toString()}");
+    }
   }
 
-  void registerWithGoogle() {
-    showDialog(
-      context: context,
-      builder: (_) => const AlertDialog(
-        title: Text('Google'),
-        content: Text('Fitur ini belum tersedia.'),
-      ),
-    );
+  void _showMessage(String msg) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
   }
 
   void navigateToLoginPage() {
@@ -94,14 +143,9 @@ class _RegisterPageState extends State<RegisterPage> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Image.asset(
-                  'lib/assets/images/logo.png',
-                  width: 200,
-                  height: 200,
-                ),
+                Image.asset('lib/assets/images/logo.png',
+                    width: 200, height: 200),
                 const SizedBox(height: 20),
-
-                // Username
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 40),
                   child: CustomFormField(
@@ -111,8 +155,6 @@ class _RegisterPageState extends State<RegisterPage> {
                   ),
                 ),
                 const SizedBox(height: 20),
-
-                // Email
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 40),
                   child: CustomFormField(
@@ -122,8 +164,6 @@ class _RegisterPageState extends State<RegisterPage> {
                   ),
                 ),
                 const SizedBox(height: 20),
-
-                // Password
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 40),
                   child: CustomFormField(
@@ -134,8 +174,6 @@ class _RegisterPageState extends State<RegisterPage> {
                   ),
                 ),
                 const SizedBox(height: 25),
-
-                // Tombol Daftar
                 _isLoading
                     ? const CircularProgressIndicator()
                     : customButton(
@@ -143,15 +181,13 @@ class _RegisterPageState extends State<RegisterPage> {
                         onPressed: registerAction,
                       ),
                 const SizedBox(height: 20),
-
-                // Divider
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 70.0),
                   child: Row(
                     children: [
                       const Expanded(
-                        child: Divider(thickness: 1, color: Colors.grey),
-                      ),
+                          child:
+                              Divider(thickness: 1, color: Colors.grey)),
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 10.0),
                         child: Text(
@@ -160,14 +196,12 @@ class _RegisterPageState extends State<RegisterPage> {
                         ),
                       ),
                       const Expanded(
-                        child: Divider(thickness: 1, color: Colors.grey),
-                      ),
+                          child:
+                              Divider(thickness: 1, color: Colors.grey)),
                     ],
                   ),
                 ),
                 const SizedBox(height: 15),
-
-                // Google Icon
                 GestureDetector(
                   onTap: registerWithGoogle,
                   child: Image.asset(
@@ -177,8 +211,6 @@ class _RegisterPageState extends State<RegisterPage> {
                   ),
                 ),
                 const SizedBox(height: 25),
-
-                // Sudah punya akun? Masuk
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -201,7 +233,7 @@ class _RegisterPageState extends State<RegisterPage> {
                       ),
                     ),
                   ],
-                ),
+                )
               ],
             ),
           ),

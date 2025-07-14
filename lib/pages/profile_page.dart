@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:sampahku_final/pages/login.dart';
 
 class ProfilePage extends StatelessWidget {
   const ProfilePage({super.key});
@@ -78,7 +80,7 @@ class ProfilePage extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 30),
-          _buildOption(Icons.edit, 'Ubah Profil'),
+          _buildOption(Icons.edit, 'Ubah Profil', context: context),
           const SizedBox(height: 15),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -89,10 +91,10 @@ class ProfilePage extends StatelessWidget {
                     style:
                         TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 10),
-                _buildOption(Icons.verified_user_outlined, 'Versi Aplikasi'),
+                _buildOption(Icons.verified_user_outlined, 'Versi Aplikasi', context: context),
                 const SizedBox(height: 8),
                 _buildOption(Icons.logout, 'Keluar',
-                    isDestructive: true),
+                    isDestructive: true, context: context),
               ],
             ),
           )
@@ -102,27 +104,42 @@ class ProfilePage extends StatelessWidget {
   }
 
   Widget _buildOption(IconData icon, String label,
-      {bool isDestructive = false}) {
+      {bool isDestructive = false, required BuildContext context}) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 15),
-        decoration: BoxDecoration(
-          color: const Color(0xfff2f2f2),
-          borderRadius: BorderRadius.circular(15),
-        ),
-        child: Row(
-          children: [
-            Icon(icon, color: isDestructive ? Colors.red : Colors.green),
-            const SizedBox(width: 15),
-            Text(
-              label,
-              style: TextStyle(
-                color: isDestructive ? Colors.red : Colors.black,
-                fontWeight: FontWeight.w500,
+      child: GestureDetector(
+        onTap: () async {
+          if (label == 'Keluar') {
+            await FirebaseAuth.instance.signOut();
+
+            if (context.mounted) {
+              Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(builder: (_) => const LoginPage()),
+                (route) => false,
+              );
+            }
+          }
+        },
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 15),
+          decoration: BoxDecoration(
+            color: const Color(0xfff2f2f2),
+            borderRadius: BorderRadius.circular(15),
+          ),
+          child: Row(
+            children: [
+              Icon(icon, color: isDestructive ? Colors.red : Colors.green),
+              const SizedBox(width: 15),
+              Text(
+                label,
+                style: TextStyle(
+                  color: isDestructive ? Colors.red : Colors.black,
+                  fontWeight: FontWeight.w500,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
