@@ -1,44 +1,92 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:sampahku_final/components/button.dart';
 import 'package:sampahku_final/components/custom_form_field.dart';
 import 'package:sampahku_final/pages/login.dart';
 
-class RegisterPage extends StatelessWidget {
+class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final usernameController = TextEditingController();
-    final emailController = TextEditingController();
-    final passwordController = TextEditingController();
+  State<RegisterPage> createState() => _RegisterPageState();
+}
 
-    void registerAction() {
-      showDialog(
-        context: context,
-        builder: (_) => const AlertDialog(
-          title: Text('Daftar'),
-          content: Text('Fitur pendaftaran belum tersedia.'),
-        ),
-      );
+class _RegisterPageState extends State<RegisterPage> {
+  final usernameController = TextEditingController(); // masih bisa dipakai simpan di Firestore nanti
+  final emailController = TextEditingController();
+  final passwordController = TextEditingController();
+  bool _isLoading = false;
+
+  void registerAction() async {
+    final email = emailController.text.trim();
+    final password = passwordController.text.trim();
+
+    if (email.isEmpty || password.isEmpty) {
+      _showMessage("Email dan password tidak boleh kosong");
+      return;
     }
 
-    void registerWithGoogle() {
-      showDialog(
-        context: context,
-        builder: (_) => const AlertDialog(
-          title: Text('Google'),
-          content: Text('Fitur ini belum tersedia.'),
-        ),
-      );
-    }
+    setState(() => _isLoading = true);
 
-    void navigateToLoginPage() {
-      Navigator.push(
+    try {
+      await FirebaseAuth.instance.createUserWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+
+      _showMessage("Akun berhasil dibuat! Silakan login.");
+
+      // Kembali ke halaman login
+      Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => const LoginPage()),
+        MaterialPageRoute(builder: (_) => const LoginPage()),
       );
+    } on FirebaseAuthException catch (e) {
+      String message = "Pendaftaran gagal";
+      if (e.code == 'email-already-in-use') {
+        message = 'Email sudah terdaftar';
+      } else if (e.code == 'weak-password') {
+        message = 'Password terlalu lemah';
+      }
+      _showMessage(message);
+    } catch (e) {
+      _showMessage("Terjadi kesalahan saat daftar");
+    } finally {
+      setState(() => _isLoading = false);
     }
+  }
 
+  void _showMessage(String msg) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+  }
+
+  void registerWithGoogle() {
+    showDialog(
+      context: context,
+      builder: (_) => const AlertDialog(
+        title: Text('Google'),
+        content: Text('Fitur ini belum tersedia.'),
+      ),
+    );
+  }
+
+  void navigateToLoginPage() {
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => const LoginPage()),
+    );
+  }
+
+  @override
+  void dispose() {
+    usernameController.dispose();
+    emailController.dispose();
+    passwordController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(
         child: Center(
@@ -88,10 +136,12 @@ class RegisterPage extends StatelessWidget {
                 const SizedBox(height: 25),
 
                 // Tombol Daftar
-                customButton(
-                  text: "Daftar",
-                  onPressed: registerAction,
-                ),
+                _isLoading
+                    ? const CircularProgressIndicator()
+                    : customButton(
+                        text: "Daftar",
+                        onPressed: registerAction,
+                      ),
                 const SizedBox(height: 20),
 
                 // Divider

@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:sampahku_final/components/button.dart';
 import 'package:sampahku_final/components/custom_form_field.dart';
 import 'package:sampahku_final/pages/home_page.dart';
-import 'package:sampahku_final/pages/register.dart'; // Pastikan Anda memiliki halaman RegisterPage
+import 'package:sampahku_final/pages/register.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -12,48 +14,82 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
-  final _usernameController = TextEditingController();
-  final _passwordController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  bool _isLoading = false;
 
-  void loginButton() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => const SampahKUHomePage()),
-    );
+  void _loginButton() async {
+    final email = _emailController.text.trim();
+    final password = _passwordController.text.trim();
+
+    if (email.isEmpty || password.isEmpty) {
+      _showMessage("Email dan password tidak boleh kosong");
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    try {
+      await FirebaseAuth.instance.signInWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const SampahKUHomePage()),
+      );
+    } on FirebaseAuthException catch (e) {
+      String message = "Login gagal";
+      if (e.code == 'user-not-found') {
+        message = 'Pengguna tidak ditemukan';
+      } else if (e.code == 'wrong-password') {
+        message = 'Password salah';
+      }
+      _showMessage(message);
+    } catch (e) {
+      _showMessage("Terjadi kesalahan saat login");
+    } finally {
+      setState(() => _isLoading = false);
+    }
   }
 
-  void loginWithGoogle() {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text('Login dengan Google'),
-          content: const Text('Fitur ini juga belum tersedia.'),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: const Text('OK'),
-            ),
-          ],
-        );
-      },
-    );
+  void _showMessage(String msg) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+  }
+
+  Future<void> loginWithGoogle() async {
+    try {
+      final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
+      if (googleUser == null) return; // user cancel
+
+      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+
+      final credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
+
+      await FirebaseAuth.instance.signInWithCredential(credential);
+
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const SampahKUHomePage()),
+      );
+    } catch (e) {
+      _showMessage("Login Google gagal: $e");
+    }
   }
 
   void navigateToRegisterPage() {
-    // Di sini Anda akan menempatkan logika untuk pindah halaman
-    Navigator.push(context, MaterialPageRoute(builder: (context) => RegisterPage()));
-    // print("Navigasi ke halaman Daftar...");
-    // ScaffoldMessenger.of(context).showSnackBar(
-    //   const SnackBar(content: Text("Fitur pendaftaran belum dihubungkan.")),
-    // );
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const RegisterPage()),
+    );
   }
 
   @override
   void dispose() {
-    _usernameController.dispose();
+    _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
@@ -61,7 +97,7 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SafeArea( // Menggunakan SafeArea agar tidak terlalu mepet ke atas
+      body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
             child: Column(
@@ -69,17 +105,17 @@ class _LoginPageState extends State<LoginPage> {
               children: [
                 Image.asset('lib/assets/images/logo.png', width: 200, height: 200),
                 const SizedBox(height: 20),
-                
+
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 40),
                   child: CustomFormField(
-                    controller: _usernameController,
-                    labelText: 'Username',
-                    hintText: 'Masukan Username Anda',
+                    controller: _emailController,
+                    labelText: 'Email',
+                    hintText: 'Masukan Email Anda',
                   ),
                 ),
                 const SizedBox(height: 20),
-                
+
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 40),
                   child: CustomFormField(
@@ -90,13 +126,15 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                 ),
                 const SizedBox(height: 25),
-                
-                customButton(
-                  text: "Masuk",
-                  onPressed: loginButton,
-                ),
+
+                _isLoading
+                    ? const CircularProgressIndicator()
+                    : customButton(
+                        text: "Masuk",
+                        onPressed: _loginButton,
+                      ),
                 const SizedBox(height: 20),
-                
+
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 70.0),
                   child: Row(
@@ -111,7 +149,7 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                 ),
                 const SizedBox(height: 15),
-                
+
                 GestureDetector(
                   onTap: loginWithGoogle,
                   child: Image.asset(
@@ -120,21 +158,17 @@ class _LoginPageState extends State<LoginPage> {
                     height: 40,
                   ),
                 ),
-                const SizedBox(height: 25), // Jarak tambahan
+                const SizedBox(height: 25),
 
-                
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     const Text(
                       "Belum Punya Akun ? ",
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: Colors.black54,
-                      ),
+                      style: TextStyle(fontSize: 16, color: Colors.black54),
                     ),
                     GestureDetector(
-                      onTap: navigateToRegisterPage, // Panggil fungsi navigasi
+                      onTap: navigateToRegisterPage,
                       child: const Text(
                         "Daftar",
                         style: TextStyle(
