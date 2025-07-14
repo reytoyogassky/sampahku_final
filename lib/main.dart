@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'pages/login.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'firebase_options.dart'; // hasil flutterfire configure
+import 'firebase_options.dart'; 
 
 
 void main() async {
