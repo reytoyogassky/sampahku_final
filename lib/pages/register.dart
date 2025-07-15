@@ -39,10 +39,10 @@ class _RegisterPageState extends State<RegisterPage> {
         password: password,
       );
 
-      await FirebaseFirestore.instance
-          .collection('pengguna')
-          .doc(userCredential.user!.uid)
-          .set({
+      final uid = userCredential.user?.uid;
+      if (uid == null) throw Exception("UID tidak ditemukan");
+
+      await FirebaseFirestore.instance.collection('pengguna').doc(uid).set({
         'nama_lengkap': namaLengkap,
         'email': email,
         'password': '***',
@@ -63,7 +63,7 @@ class _RegisterPageState extends State<RegisterPage> {
       }
       _showMessage(message);
     } catch (e) {
-      _showMessage("Terjadi kesalahan saat daftar");
+      _showMessage("Gagal simpan ke Firestore: ${e.toString()}");
     } finally {
       setState(() => _isLoading = false);
     }
@@ -71,7 +71,12 @@ class _RegisterPageState extends State<RegisterPage> {
 
   void registerWithGoogle() async {
     try {
-      final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
+      final googleSignIn = GoogleSignIn();
+
+      // 🧹 Paksa logout dulu supaya muncul dialog akun
+      await googleSignIn.signOut();
+
+      final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
       if (googleUser == null) {
         _showMessage("Login dibatalkan.");
         return;
@@ -89,16 +94,22 @@ class _RegisterPageState extends State<RegisterPage> {
           await FirebaseAuth.instance.signInWithCredential(credential);
       final user = userCredential.user;
 
-      final userDoc = await FirebaseFirestore.instance
+      if (user == null) {
+        _showMessage("Login gagal.");
+        return;
+      }
+
+      final uid = user.uid;
+
+      // Cek apakah user sudah ada di Firestore
+      final doc = await FirebaseFirestore.instance
           .collection('pengguna')
-          .doc(user!.uid)
+          .doc(uid)
           .get();
 
-      if (!userDoc.exists) {
-        await FirebaseFirestore.instance
-            .collection('pengguna')
-            .doc(user.uid)
-            .set({
+      if (!doc.exists) {
+        // Jika belum ada, simpan ke Firestore
+        await FirebaseFirestore.instance.collection('pengguna').doc(uid).set({
           'nama_lengkap': user.displayName ?? '',
           'email': user.email ?? '',
           'password': '-',
@@ -186,8 +197,7 @@ class _RegisterPageState extends State<RegisterPage> {
                   child: Row(
                     children: [
                       const Expanded(
-                          child:
-                              Divider(thickness: 1, color: Colors.grey)),
+                          child: Divider(thickness: 1, color: Colors.grey)),
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 10.0),
                         child: Text(
@@ -196,8 +206,7 @@ class _RegisterPageState extends State<RegisterPage> {
                         ),
                       ),
                       const Expanded(
-                          child:
-                              Divider(thickness: 1, color: Colors.grey)),
+                          child: Divider(thickness: 1, color: Colors.grey)),
                     ],
                   ),
                 ),

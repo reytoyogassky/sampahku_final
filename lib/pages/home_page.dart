@@ -1,16 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_fonts/google_fonts.dart';
+
 import 'package:sampahku_final/pages/edukasi_page.dart';
 import 'package:sampahku_final/pages/profile_page.dart';
 import 'package:sampahku_final/pages/tantangan_page.dart';
 import 'package:sampahku_final/pages/trash_page.dart';
 
-void main() {
-  runApp(const MaterialApp(home: SampahKUHomePage(), debugShowCheckedModeBanner: false));
-}
-
-// ==== WARNA ====
 const Color kScaffoldBackground = Color(0xFFF4F7F6);
 const Color kDarkGreen = Color(0xFF00695C);
 const Color kMediumGreen = Color(0xFF26A69A);
@@ -21,14 +19,37 @@ const Color kBlueCard = Color(0xFFBBDEFB);
 const Color kGreenCard = Color(0xFFC8E6C9);
 const Color kBrownCard = Color(0xFFD7CCC8);
 
-// ==== HALAMAN UTAMA ====
-class SampahKUHomePage extends StatelessWidget {
+class SampahKUHomePage extends StatefulWidget {
   const SampahKUHomePage({super.key});
+
+  @override
+  State<SampahKUHomePage> createState() => _SampahKUHomePageState();
+}
+
+class _SampahKUHomePageState extends State<SampahKUHomePage> {
+  String namaLengkap = '...';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserNamaLengkap();
+  }
+
+  Future<void> _loadUserNamaLengkap() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      final doc = await FirebaseFirestore.instance.collection('pengguna').doc(user.uid).get();
+      if (doc.exists) {
+        setState(() {
+          namaLengkap = doc['nama_lengkap'] ?? 'Pengguna';
+        });
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle.light);
-
     return Scaffold(
       backgroundColor: kScaffoldBackground,
       body: SingleChildScrollView(
@@ -44,6 +65,8 @@ class SampahKUHomePage extends StatelessWidget {
   }
 
   Widget _buildHeader(BuildContext context) {
+    final user = FirebaseAuth.instance.currentUser;
+
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 50, 20, 30),
       decoration: const BoxDecoration(
@@ -58,18 +81,25 @@ class SampahKUHomePage extends StatelessWidget {
         children: [
           Row(
             children: [
-              const CircleAvatar(
+              CircleAvatar(
                 radius: 25,
                 backgroundColor: Colors.white,
-                child: Icon(Icons.person, size: 30, color: Colors.grey),
+                backgroundImage: NetworkImage(
+                  user?.photoURL ??
+                      'https://ui-avatars.com/api/?name=${Uri.encodeComponent(namaLengkap)}',
+                ),
               ),
               const SizedBox(width: 15),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('SampahKU', style: GoogleFonts.poppins(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
-                  Text('Haloo, Yohanes Irshan 👋', style: GoogleFonts.poppins(color: Colors.white70, fontSize: 14)),
-                  Text('King Plastik 🥇', style: GoogleFonts.poppins(color: Colors.white, fontSize: 12)),
+                  Text('SampahKU',
+                      style: GoogleFonts.poppins(
+                          color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                  Text('Haloo, $namaLengkap 👋',
+                      style: GoogleFonts.poppins(color: Colors.white70, fontSize: 14)),
+                  Text('King Plastik 🥇',
+                      style: GoogleFonts.poppins(color: Colors.white, fontSize: 12)),
                 ],
               ),
               const Spacer(),
@@ -77,9 +107,12 @@ class SampahKUHomePage extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 30),
-          Text('Challenge 🔥', style: GoogleFonts.poppins(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+          Text('Challenge 🔥',
+              style: GoogleFonts.poppins(
+                  color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
           const SizedBox(height: 5),
-          Text('7 Hari Tanpa Plastik', style: GoogleFonts.poppins(color: Colors.white70, fontSize: 14)),
+          Text('7 Hari Tanpa Plastik',
+              style: GoogleFonts.poppins(color: Colors.white70, fontSize: 14)),
           const SizedBox(height: 15),
           _buildProgressBar(),
         ],
@@ -116,12 +149,8 @@ class SampahKUHomePage extends StatelessWidget {
               child: Padding(
                 padding: const EdgeInsets.only(right: 18.0),
                 child: Text('${(progress * 100).toInt()}%',
-                  style: GoogleFonts.poppins(
-                    color: kDarkGreen,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14,
-                  ),
-                ),
+                    style: GoogleFonts.poppins(
+                        color: kDarkGreen, fontWeight: FontWeight.bold, fontSize: 14)),
               ),
             ),
           ],
@@ -168,9 +197,12 @@ class SampahKUHomePage extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('Statistik', style: GoogleFonts.poppins(fontSize: 20, fontWeight: FontWeight.bold)),
+              Text('Statistik',
+                  style: GoogleFonts.poppins(fontSize: 20, fontWeight: FontWeight.bold)),
               Chip(
-                label: Text('Filter', style: GoogleFonts.poppins(color: const Color(0xff0F9D58), fontWeight: FontWeight.w600)),
+                label: Text('Filter',
+                    style: GoogleFonts.poppins(
+                        color: const Color(0xff0F9D58), fontWeight: FontWeight.w600)),
                 backgroundColor: const Color(0xffE8F3F1),
                 avatar: const Icon(Icons.filter_list, color: Color(0xff0F9D58)),
                 padding: const EdgeInsets.symmetric(horizontal: 8),
@@ -207,19 +239,18 @@ class SampahKUHomePage extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20.0),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          Text('Jenis-Jenis Sampah',
+              style: GoogleFonts.poppins(fontSize: 20, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 4),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('Jenis-Jenis Sampah', style: GoogleFonts.poppins(fontSize: 20, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 4),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text('By: Yohanes Irshan', style: GoogleFonts.poppins(color: Colors.grey[600], fontSize: 12)),
-                  Text('10 Juni 2025', style: GoogleFonts.poppins(color: Colors.grey[600], fontSize: 12)),
-                ],
-              )
+              Text('By: $namaLengkap',
+                  style: GoogleFonts.poppins(color: Colors.grey[600], fontSize: 12)),
+              Text('10 Juni 2025',
+                  style: GoogleFonts.poppins(color: Colors.grey[600], fontSize: 12)),
             ],
           ),
           const SizedBox(height: 15),
@@ -249,25 +280,31 @@ class SampahKUHomePage extends StatelessWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
-            _buildNavItem(context, Icons.bar_chart, 'Tantangan', () => Navigator.push(context, MaterialPageRoute(builder: (context) => TantanganPage()))),
-            _buildNavItem(context, Icons.delete_forever_outlined, 'Tambah Sampah', () => Navigator.push(context, MaterialPageRoute(builder: (context) => TrashPage()))),
-            _buildNavItem(context, Icons.book_outlined, 'Edukasi', () => Navigator.push(context, MaterialPageRoute(builder: (context) => EdukasiPage()))),
-            _buildNavItem(context, Icons.person_outline, 'Profile', () => Navigator.push(context, MaterialPageRoute(builder: (context) => ProfilePage()))),
+            _buildNavItem(context, Icons.bar_chart, 'Tantangan', () => const TantanganPage()),
+            _buildNavItem(context, Icons.delete_forever_outlined, 'Tambah Sampah', () => const TrashPage()),
+            _buildNavItem(context, Icons.book_outlined, 'Edukasi', () => const EdukasiPage()),
+            _buildNavItem(context, Icons.person_outline, 'Profile', () => const ProfilePage()),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildNavItem(BuildContext context, IconData icon, String label, VoidCallback onTap) {
+  Widget _buildNavItem(BuildContext context, IconData icon, String label, Widget Function() pageBuilder) {
     return GestureDetector(
-      onTap: onTap,
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => pageBuilder()),
+        );
+      },
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(icon, color: Colors.white, size: 26),
           const SizedBox(height: 4),
-          Text(label, style: GoogleFonts.poppins(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w500)),
+          Text(label,
+              style: GoogleFonts.poppins(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w500)),
         ],
       ),
     );
@@ -312,6 +349,7 @@ class _WasteCard extends StatelessWidget {
   final Color color;
   final String title;
   final String content1;
+
   const _WasteCard({required this.color, required this.title, required this.content1});
 
   @override
@@ -324,28 +362,18 @@ class _WasteCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title, style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.black87)),
+          Text(title,
+              style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.black87)),
           const SizedBox(height: 5),
-          Text(content1, style: GoogleFonts.poppins(fontSize: 12, color: Colors.black.withOpacity(0.7))),
+          Text(content1,
+              style: GoogleFonts.poppins(fontSize: 12, color: Colors.black.withOpacity(0.7))),
           const Spacer(),
           const Icon(Icons.recycling, size: 24, color: Colors.black54),
           const SizedBox(height: 5),
-          Text('Sampah dapat di daur ulang', style: GoogleFonts.poppins(fontSize: 12, color: Colors.black.withOpacity(0.7))),
+          Text('Sampah dapat di daur ulang',
+              style: GoogleFonts.poppins(fontSize: 12, color: Colors.black.withOpacity(0.7))),
         ],
       ),
-    );
-  }
-}
-
-class DummyPage extends StatelessWidget {
-  final String title;
-  const DummyPage(this.title, {super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text(title)),
-      body: Center(child: Text('Ini halaman $title')),
     );
   }
 }

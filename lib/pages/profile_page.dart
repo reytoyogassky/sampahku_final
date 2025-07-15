@@ -1,9 +1,41 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:sampahku_final/pages/login.dart';
 
-class ProfilePage extends StatelessWidget {
+class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
+
+  @override
+  State<ProfilePage> createState() => _ProfilePageState();
+}
+
+class _ProfilePageState extends State<ProfilePage> {
+  String namaLengkap = '...';
+  int point = 100; // default static
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserData();
+  }
+
+  Future<void> _loadUserData() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      final doc = await FirebaseFirestore.instance
+          .collection('pengguna')
+          .doc(user.uid)
+          .get();
+      if (doc.exists) {
+        setState(() {
+          namaLengkap = doc['nama_lengkap'] ?? 'Pengguna';
+          // Tambahkan kalau kamu punya data point di Firestore
+          // point = doc['point'] ?? 100;
+        });
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -38,16 +70,17 @@ class ProfilePage extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 20),
-                const CircleAvatar(
+                CircleAvatar(
                   radius: 50,
                   backgroundImage: NetworkImage(
-                    'https://media.discordapp.net/attachments/1122216076479045642/1377227147105538128/Raze_big_goofy_head.jpeg?ex=686cee3b&is=686b9cbb&hm=4a7f196c5b8d65602a4c7041babd6b31702b9728c63fffd104db18a0b038acf7&=&format=webp&width=441&height=376',
+                    FirebaseAuth.instance.currentUser?.photoURL ??
+                        'https://ui-avatars.com/api/?name=${Uri.encodeComponent(namaLengkap)}',
                   ),
                 ),
                 const SizedBox(height: 10),
-                const Text(
-                  'Yohanes Irshan',
-                  style: TextStyle(
+                Text(
+                  namaLengkap,
+                  style: const TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.bold,
                       fontSize: 18),
@@ -64,14 +97,14 @@ class ProfilePage extends StatelessWidget {
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(30),
                   ),
-                  child: const Row(
+                  child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.eco, size: 16, color: Colors.green),
-                      SizedBox(width: 5),
+                      const Icon(Icons.eco, size: 16, color: Colors.green),
+                      const SizedBox(width: 5),
                       Text(
-                        '100 Point',
-                        style: TextStyle(color: Colors.green),
+                        '$point Point',
+                        style: const TextStyle(color: Colors.green),
                       ),
                     ],
                   ),
@@ -91,7 +124,8 @@ class ProfilePage extends StatelessWidget {
                     style:
                         TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 10),
-                _buildOption(Icons.verified_user_outlined, 'Versi Aplikasi', context: context),
+                _buildOption(Icons.verified_user_outlined, 'Versi Aplikasi',
+                    context: context),
                 const SizedBox(height: 8),
                 _buildOption(Icons.logout, 'Keluar',
                     isDestructive: true, context: context),
