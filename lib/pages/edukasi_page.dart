@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-
+import 'package:sampahku_final/pages/home_page.dart';
 class EdukasiPage extends StatelessWidget {
   const EdukasiPage({super.key});
 
@@ -10,7 +10,16 @@ class EdukasiPage extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        leading: BackButton(color: Colors.black),
+        leading: BackButton(
+          color: Colors.black,
+          onPressed: () {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (_) => const SampahKUHomePage()),
+            );
+          },
+        ),
+        
         title: const Text(
           'Edukasi',
           style: TextStyle(

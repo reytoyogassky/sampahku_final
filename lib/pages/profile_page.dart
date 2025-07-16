@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:sampahku_final/pages/login.dart';
+import 'package:sampahku_final/pages/home_page.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -12,7 +13,7 @@ class ProfilePage extends StatefulWidget {
 
 class _ProfilePageState extends State<ProfilePage> {
   String namaLengkap = '...';
-  int point = 100; // default static
+  int point = 100;
 
   @override
   void initState() {
@@ -30,8 +31,6 @@ class _ProfilePageState extends State<ProfilePage> {
       if (doc.exists) {
         setState(() {
           namaLengkap = doc['nama_lengkap'] ?? 'Pengguna';
-          // Tambahkan kalau kamu punya data point di Firestore
-          // point = doc['point'] ?? 100;
         });
       }
     }
@@ -62,7 +61,12 @@ class _ProfilePageState extends State<ProfilePage> {
                 Align(
                   alignment: Alignment.topLeft,
                   child: GestureDetector(
-                    onTap: () => Navigator.pop(context),
+                    onTap: () {
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(builder: (_) => const SampahKUHomePage()),
+                      );
+                    },
                     child: const CircleAvatar(
                       backgroundColor: Colors.white,
                       child: Icon(Icons.arrow_back, color: Colors.black),
@@ -145,7 +149,6 @@ class _ProfilePageState extends State<ProfilePage> {
         onTap: () async {
           if (label == 'Keluar') {
             await FirebaseAuth.instance.signOut();
-
             if (context.mounted) {
               Navigator.pushAndRemoveUntil(
                 context,

@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:sampahku_final/pages/home_page.dart';
 
 class TrashPage extends StatefulWidget {
   const TrashPage({super.key});
@@ -15,14 +18,7 @@ class _TrashPageState extends State<TrashPage> {
   final TextEditingController amountController = TextEditingController();
   final TextEditingController noteController = TextEditingController();
 
-  final List<String> sampahTypes = [
-    'Plastik',
-    'Organik',
-    'Kaca',
-    'Kertas',
-    'Logam',
-  ];
-
+  final List<String> sampahTypes = ['Organik', 'Anorganik'];
   final List<String> satuan = ['gram', 'kg', 'pcs'];
 
   Future<void> _pickDate() async {
@@ -38,6 +34,63 @@ class _TrashPageState extends State<TrashPage> {
     }
   }
 
+  Future<void> _simpanKeFirestore() async {
+    final user = FirebaseAuth.instance.currentUser;
+
+    if (user == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Pengguna belum login')),
+      );
+      return;
+    }
+
+    if (selectedDate == null ||
+        selectedType == null ||
+        amountController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Mohon lengkapi semua data')),
+      );
+      return;
+    }
+
+    final jumlah = double.tryParse(amountController.text);
+    if (jumlah == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Jumlah tidak valid')),
+      );
+      return;
+    }
+
+    try {
+      await FirebaseFirestore.instance.collection('catatan_sampah').add({
+        'id_pengguna': user.uid,
+        'tanggal_catat': selectedDate!.toIso8601String().split('T')[0],
+        'jenis_sampah': selectedType,
+        'jumlah': jumlah,
+        'satuan': selectedUnit,
+        'catatan': noteController.text.trim(),
+        'created_at': FieldValue.serverTimestamp(),
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Data berhasil disimpan')),
+      );
+
+      // Jangan kembali ke halaman utama
+      // Reset form
+      setState(() {
+        selectedDate = null;
+        selectedType = null;
+        amountController.clear();
+        noteController.clear();
+      });
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Gagal menyimpan: $e')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -48,7 +101,6 @@ class _TrashPageState extends State<TrashPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // HEADER
               Row(
                 children: [
                   GestureDetector(
@@ -69,10 +121,7 @@ class _TrashPageState extends State<TrashPage> {
                   ),
                 ],
               ),
-
               const SizedBox(height: 30),
-
-              // FORM
               Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
@@ -83,7 +132,6 @@ class _TrashPageState extends State<TrashPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     _sectionTitle('Catat Sampah Hari ini'),
-
                     const SizedBox(height: 20),
                     _formLabel('Tanggal :'),
                     GestureDetector(
@@ -100,7 +148,6 @@ class _TrashPageState extends State<TrashPage> {
                         ),
                       ),
                     ),
-
                     const SizedBox(height: 20),
                     _formLabel('Jenis Sampah :'),
                     Container(
@@ -114,12 +161,14 @@ class _TrashPageState extends State<TrashPage> {
                         ),
                         dropdownColor: const Color(0xff2e4d5a),
                         isExpanded: true,
-                        icon: const Icon(Icons.arrow_drop_down, color: Colors.white),
+                        icon: const Icon(Icons.arrow_drop_down,
+                            color: Colors.white),
                         underline: const SizedBox(),
                         items: sampahTypes.map((e) {
                           return DropdownMenuItem(
                             value: e,
-                            child: Text(e, style: const TextStyle(color: Colors.white)),
+                            child: Text(e,
+                                style: const TextStyle(color: Colors.white)),
                           );
                         }).toList(),
                         onChanged: (value) {
@@ -127,7 +176,6 @@ class _TrashPageState extends State<TrashPage> {
                         },
                       ),
                     ),
-
                     const SizedBox(height: 20),
                     _formLabel('Jumlah :'),
                     Row(
@@ -139,8 +187,7 @@ class _TrashPageState extends State<TrashPage> {
                             style: const TextStyle(color: Colors.white),
                             decoration: InputDecoration(
                               hintText: '0',
-                              hintStyle:
-                                  const TextStyle(color: Colors.white54),
+                              hintStyle: const TextStyle(color: Colors.white54),
                               filled: true,
                               fillColor: Colors.transparent,
                               contentPadding:
@@ -178,7 +225,6 @@ class _TrashPageState extends State<TrashPage> {
                         )
                       ],
                     ),
-
                     const SizedBox(height: 20),
                     _formLabel('Catatan (Opsional) :'),
                     TextField(
@@ -201,12 +247,9 @@ class _TrashPageState extends State<TrashPage> {
                         ),
                       ),
                     ),
-
                     const SizedBox(height: 25),
-
-                    // BUTTONS
                     ElevatedButton(
-                      onPressed: () {},
+                      onPressed: _simpanKeFirestore,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xff57e47a),
                         foregroundColor: Colors.white,
@@ -225,7 +268,11 @@ class _TrashPageState extends State<TrashPage> {
                     const SizedBox(height: 12),
                     OutlinedButton(
                       onPressed: () {
-                        Navigator.pop(context);
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(
+                              builder: (_) => const SampahKUHomePage()),
+                        );
                       },
                       style: OutlinedButton.styleFrom(
                         side: const BorderSide(color: Colors.white24),
@@ -249,7 +296,8 @@ class _TrashPageState extends State<TrashPage> {
 
   Widget _formLabel(String text) => Text(
         text,
-        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w500),
+        style:
+            const TextStyle(color: Colors.white, fontWeight: FontWeight.w500),
       );
 
   Widget _sectionTitle(String text) => Container(

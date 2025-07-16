@@ -27,7 +27,16 @@ class SampahKUHomePage extends StatefulWidget {
 }
 
 class _SampahKUHomePageState extends State<SampahKUHomePage> {
+  int _selectedIndex = 0;
   String namaLengkap = '...';
+
+  final List<Widget> _pages = const [
+    HomeContent(), // Ini isi halaman utama
+    TantanganPage(),
+    TrashPage(),
+    EdukasiPage(),
+    ProfilePage(),
+  ];
 
   @override
   void initState() {
@@ -50,77 +59,120 @@ class _SampahKUHomePageState extends State<SampahKUHomePage> {
   @override
   Widget build(BuildContext context) {
     SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle.light);
+
     return Scaffold(
       backgroundColor: kScaffoldBackground,
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            _buildHeader(context),
-            _buildBody(context),
-          ],
-        ),
+      body: IndexedStack(
+        index: _selectedIndex,
+        children: [
+          HomeContent(namaLengkap: namaLengkap),
+          const TantanganPage(),
+          const TrashPage(),
+          const EdukasiPage(),
+          const ProfilePage(),
+        ],
       ),
-      bottomNavigationBar: _buildBottomNavBar(context),
+      bottomNavigationBar: BottomNavigationBar(
+        backgroundColor: kDarkGreen,
+        selectedItemColor: Colors.white,
+        unselectedItemColor: Colors.white60,
+        currentIndex: _selectedIndex,
+        type: BottomNavigationBarType.fixed,
+        onTap: (index) => setState(() => _selectedIndex = index),
+        items: const [
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Beranda'),
+          BottomNavigationBarItem(icon: Icon(Icons.bar_chart), label: 'Tantangan'),
+          BottomNavigationBarItem(icon: Icon(Icons.delete_forever), label: 'Tambah Sampah'),
+          BottomNavigationBarItem(icon: Icon(Icons.book), label: 'Edukasi'),
+          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profil'),
+        ],
+      ),
     );
   }
+}
 
-  Widget _buildHeader(BuildContext context) {
+class HomeContent extends StatelessWidget {
+  final String namaLengkap;
+  const HomeContent({super.key, this.namaLengkap = '...'});
+
+  @override
+  Widget build(BuildContext context) {
     final user = FirebaseAuth.instance.currentUser;
-
-    return Container(
-      padding: const EdgeInsets.fromLTRB(20, 50, 20, 30),
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          colors: [kMediumGreen, kDarkGreen],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-      ),
+    return SingleChildScrollView(
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              CircleAvatar(
-                radius: 25,
-                backgroundColor: Colors.white,
-                backgroundImage: NetworkImage(
-                  user?.photoURL ??
-                      'https://ui-avatars.com/api/?name=${Uri.encodeComponent(namaLengkap)}',
+          // HEADER
+          Container(
+            padding: const EdgeInsets.fromLTRB(20, 50, 20, 30),
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [kMediumGreen, kDarkGreen],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 25,
+                      backgroundColor: Colors.white,
+                      backgroundImage: NetworkImage(
+                        user?.photoURL ??
+                            'https://ui-avatars.com/api/?name=${Uri.encodeComponent(namaLengkap)}',
+                      ),
+                    ),
+                    const SizedBox(width: 15),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('SampahKU', style: GoogleFonts.poppins(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                        Text('Haloo, $namaLengkap 👋', style: GoogleFonts.poppins(color: Colors.white70, fontSize: 14)),
+                        Text('King Plastik 🥇', style: GoogleFonts.poppins(color: Colors.white, fontSize: 12)),
+                      ],
+                    ),
+                    const Spacer(),
+                    const Icon(Icons.notifications_none, color: Colors.white, size: 30),
+                  ],
                 ),
-              ),
-              const SizedBox(width: 15),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('SampahKU',
-                      style: GoogleFonts.poppins(
-                          color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
-                  Text('Haloo, $namaLengkap 👋',
-                      style: GoogleFonts.poppins(color: Colors.white70, fontSize: 14)),
-                  Text('King Plastik 🥇',
-                      style: GoogleFonts.poppins(color: Colors.white, fontSize: 12)),
-                ],
-              ),
-              const Spacer(),
-              const Icon(Icons.notifications_none, color: Colors.white, size: 30),
-            ],
+                const SizedBox(height: 30),
+                Text('Challenge 🔥', style: GoogleFonts.poppins(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 5),
+                Text('7 Hari Tanpa Plastik', style: GoogleFonts.poppins(color: Colors.white70, fontSize: 14)),
+                const SizedBox(height: 15),
+                _progressBar(),
+              ],
+            ),
           ),
-          const SizedBox(height: 30),
-          Text('Challenge 🔥',
-              style: GoogleFonts.poppins(
-                  color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 5),
-          Text('7 Hari Tanpa Plastik',
-              style: GoogleFonts.poppins(color: Colors.white70, fontSize: 14)),
-          const SizedBox(height: 15),
-          _buildProgressBar(),
+
+          // BODY
+          Container(
+            transform: Matrix4.translationValues(0.0, -20.0, 0.0),
+            padding: const EdgeInsets.only(top: 20),
+            decoration: const BoxDecoration(
+              color: kScaffoldBackground,
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(25),
+                topRight: Radius.circular(25),
+              ),
+            ),
+            child: Column(
+              children: [
+                _statistik(),
+                const SizedBox(height: 30),
+                _jenisSampah(namaLengkap),
+                const SizedBox(height: 20),
+              ],
+            ),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildProgressBar() {
+  Widget _progressBar() {
     const double progress = 0.75;
     return Container(
       height: 40,
@@ -159,29 +211,7 @@ class _SampahKUHomePageState extends State<SampahKUHomePage> {
     );
   }
 
-  Widget _buildBody(BuildContext context) {
-    return Container(
-      transform: Matrix4.translationValues(0.0, -20.0, 0.0),
-      padding: const EdgeInsets.only(top: 20),
-      decoration: const BoxDecoration(
-        color: kScaffoldBackground,
-        borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(25),
-          topRight: Radius.circular(25),
-        ),
-      ),
-      child: Column(
-        children: [
-          _buildStatistik(context),
-          const SizedBox(height: 30),
-          _buildJenisSampah(context),
-          const SizedBox(height: 20),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildStatistik(BuildContext context) {
+  Widget _statistik() {
     final Map<String, List<double>> chartData = {
       'Jan': [0.6],
       'Feb': [0.7, 0.9],
@@ -212,9 +242,9 @@ class _SampahKUHomePageState extends State<SampahKUHomePage> {
           const SizedBox(height: 15),
           Row(
             children: [
-              _buildLegend(kDarkBarColor, 'Organik'),
+              _legend(kDarkBarColor, 'Organik'),
               const SizedBox(width: 20),
-              _buildLegend(kLightBarColor, 'Anorganik'),
+              _legend(kLightBarColor, 'Anorganik'),
               const Spacer(),
               Text('2025', style: GoogleFonts.poppins(color: Colors.grey, fontSize: 12)),
             ],
@@ -226,7 +256,7 @@ class _SampahKUHomePageState extends State<SampahKUHomePage> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               crossAxisAlignment: CrossAxisAlignment.end,
               children: chartData.entries.map((entry) {
-                return _buildMonthBarGroup(entry.key, entry.value);
+                return _barGroup(entry.key, entry.value);
               }).toList(),
             ),
           ),
@@ -235,22 +265,19 @@ class _SampahKUHomePageState extends State<SampahKUHomePage> {
     );
   }
 
-  Widget _buildJenisSampah(BuildContext context) {
+  Widget _jenisSampah(String namaLengkap) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Jenis-Jenis Sampah',
-              style: GoogleFonts.poppins(fontSize: 20, fontWeight: FontWeight.bold)),
+          Text('Jenis-Jenis Sampah', style: GoogleFonts.poppins(fontSize: 20, fontWeight: FontWeight.bold)),
           const SizedBox(height: 4),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('By: $namaLengkap',
-                  style: GoogleFonts.poppins(color: Colors.grey[600], fontSize: 12)),
-              Text('10 Juni 2025',
-                  style: GoogleFonts.poppins(color: Colors.grey[600], fontSize: 12)),
+              Text('By: $namaLengkap', style: GoogleFonts.poppins(color: Colors.grey[600], fontSize: 12)),
+              Text('10 Juni 2025', style: GoogleFonts.poppins(color: Colors.grey[600], fontSize: 12)),
             ],
           ),
           const SizedBox(height: 15),
@@ -272,55 +299,17 @@ class _SampahKUHomePageState extends State<SampahKUHomePage> {
     );
   }
 
-  Widget _buildBottomNavBar(BuildContext context) {
-    return BottomAppBar(
-      color: kDarkGreen,
-      child: SizedBox(
-        height: 65,
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: [
-            _buildNavItem(context, Icons.bar_chart, 'Tantangan', () => const TantanganPage()),
-            _buildNavItem(context, Icons.delete_forever_outlined, 'Tambah Sampah', () => const TrashPage()),
-            _buildNavItem(context, Icons.book_outlined, 'Edukasi', () => const EdukasiPage()),
-            _buildNavItem(context, Icons.person_outline, 'Profile', () => const ProfilePage()),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildNavItem(BuildContext context, IconData icon, String label, Widget Function() pageBuilder) {
-    return GestureDetector(
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => pageBuilder()),
-        );
-      },
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(icon, color: Colors.white, size: 26),
-          const SizedBox(height: 4),
-          Text(label,
-              style: GoogleFonts.poppins(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w500)),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildLegend(Color color, String text) {
+  Widget _legend(Color color, String label) {
     return Row(
       children: [
         Container(width: 10, height: 10, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
         const SizedBox(width: 8),
-        Text(text, style: GoogleFonts.poppins(color: Colors.grey.shade700)),
+        Text(label, style: GoogleFonts.poppins(color: Colors.grey.shade700)),
       ],
     );
   }
 
-  Widget _buildMonthBarGroup(String month, List<double> heights) {
+  Widget _barGroup(String month, List<double> heights) {
     return Column(
       mainAxisAlignment: MainAxisAlignment.end,
       children: [
@@ -349,7 +338,6 @@ class _WasteCard extends StatelessWidget {
   final Color color;
   final String title;
   final String content1;
-
   const _WasteCard({required this.color, required this.title, required this.content1});
 
   @override
@@ -362,16 +350,13 @@ class _WasteCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title,
-              style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.black87)),
+          Text(title, style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.black87)),
           const SizedBox(height: 5),
-          Text(content1,
-              style: GoogleFonts.poppins(fontSize: 12, color: Colors.black.withOpacity(0.7))),
+          Text(content1, style: GoogleFonts.poppins(fontSize: 12, color: Colors.black.withOpacity(0.7))),
           const Spacer(),
           const Icon(Icons.recycling, size: 24, color: Colors.black54),
           const SizedBox(height: 5),
-          Text('Sampah dapat di daur ulang',
-              style: GoogleFonts.poppins(fontSize: 12, color: Colors.black.withOpacity(0.7))),
+          Text('Sampah dapat di daur ulang', style: GoogleFonts.poppins(fontSize: 12, color: Colors.black.withOpacity(0.7))),
         ],
       ),
     );
